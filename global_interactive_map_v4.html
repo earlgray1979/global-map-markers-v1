@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Toxic Borderscapes — Global Overview</title>
+
+    <script src="https://unpkg.com/maplibre-gl@5.23.0/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@5.23.0/dist/maplibre-gl.css" rel="stylesheet" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --color-primary: #1a3a5c;
+            --color-marker: #b8442b;          /* warm rust-red, stands out against grey map */
+            --color-marker-selected: #2c6e7f; /* teal for selected state */
+            --color-text: #1a1a1a;
+            --color-text-muted: #555;
+            --color-text-faint: #888;
+            --color-bg-panel: #faf8f5;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            color: var(--color-text);
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        /* ---------- MAPLIBRE POPUP OVERRIDES ---------- */
+        .maplibregl-popup {
+            max-width: 380px !important;
+        }
+
+        .maplibregl-popup-content {
+            background-color: var(--color-bg-panel);
+            padding: 24px 26px 20px;
+            border-radius: 4px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .maplibregl-popup-close-button {
+            font-size: 1.4rem;
+            color: var(--color-text-faint);
+            padding: 4px 10px 6px;
+            right: 4px;
+            top: 4px;
+        }
+
+        .maplibregl-popup-close-button:hover {
+            background-color: transparent;
+            color: var(--color-primary);
+        }
+
+        .maplibregl-popup-content h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: 4px;
+            line-height: 1.25;
+        }
+
+        .maplibregl-popup-content .subtitle {
+            font-size: 0.75rem;
+            color: var(--color-text-faint);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+            margin-bottom: 14px;
+        }
+
+        .maplibregl-popup-content p {
+            font-size: 0.9rem;
+            line-height: 1.65;
+            margin-bottom: 12px;
+            color: var(--color-text-muted);
+        }
+
+        .maplibregl-popup-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .maplibregl-popup-content blockquote {
+            font-size: 0.9rem;
+            font-style: italic;
+            line-height: 1.6;
+            margin: 14px 0;
+            padding-left: 14px;
+            border-left: 2px solid var(--color-marker-selected);
+            color: var(--color-text-muted);
+        }
+
+        /* Marker styles */
+        .marker {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: var(--color-marker);
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .marker:hover {
+            transform: scale(1.25);
+        }
+
+        .marker.selected {
+            width: 28px;
+            height: 28px;
+            background-color: var(--color-marker-selected);
+            border: 4px solid white;
+            box-shadow: 0 0 0 3px var(--color-marker-selected), 0 2px 10px rgba(0, 0, 0, 0.4);
+            z-index: 100;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+
+    <script>
+        const sites = [
+            {
+                id: 'us-mexico',
+                name: 'US–Mexico Border',
+                coordinates: [-106.5, 31.7],
+                content: `
+                    <h2>US–Mexico Border</h2>
+                    <p class="subtitle">A toxic borderscape</p>
+                    <p>Border violence, petrochemical corridors and pesticide-intensive agriculture zones where migrant labour and environmental risk intersect (Tiefenbacher 2011). The Rio Grande is one of the most polluted water systems on the continent — a slow accumulation of agricultural runoff, industrial discharge, and untreated sewage flowing along a militarised frontier.</p>
+                `
+            },
+            {
+                id: 'tres-fronteras',
+                name: 'Tres Fronteras — Peru, Brazil, Colombia',
+                coordinates: [-69.95, -4.22],
+                content: `
+                    <h2>Tres Fronteras</h2>
+                    <p class="subtitle">Peru, Brazil, Colombia</p>
+                    <p>The Amazon rainforest spans the borders here, and this region is a hotbed of deforestation, narco violence, drug trafficking, and illegal gold mining — all intensified in the borderlands where state reach is weakest and the costs of extraction can be externalised onto indigenous communities and ecosystems already pressed to the margins.</p>
+                `
+            },
+            {
+                id: 'drc-rwanda',
+                name: 'Democratic Republic of Congo – Rwanda',
+                coordinates: [29.2, -1.7],
+                content: `
+                    <h2>DRC – Rwanda</h2>
+                    <p class="subtitle">A toxic borderscape</p>
+                    <p>Eastern Congo holds vast mineral wealth that is being eagerly extracted to facilitate the global green transition. Meanwhile, the Congolese in the area have had to survive almost 30 years of border violence as armed groups battle each other and the state.</p>
+                    <p>The minerals that travel out — coltan, cobalt, tungsten, tin — carry the costs of extraction in their wake: contaminated water tables, deforestation extending kilometres beyond mine sites, and a political economy in which conflict and ore move along the same roads.</p>
+                `
+            },
+            {
+                id: 'indonesia-papua',
+                name: 'Indonesia–Papua Border',
+                coordinates: [138.08, -4.08],
+                content: `
+                    <h2>Indonesia–Papua Border</h2>
+                    <p class="subtitle">A toxic borderscape</p>
+                    <p>The tailings dams of West Papua's Grasberg mine — one of the largest gold and copper operations in the world — spill into contested transboundary waters inhabited by contesting and long-suppressed indigenous struggles for self-determination and sovereignty.</p>
+                    <p>The mine and the military base share a road, a payroll, and a geography. The river carries the costs downstream, across territories whose borders were drawn by powers that no longer govern them.</p>
+                `
+            },
+            {
+                id: 'nauru',
+                name: 'Nauru Maritime Borders',
+                coordinates: [166.93, -0.52],
+                content: `
+                    <h2>Nauru</h2>
+                    <p class="subtitle">A toxic borderscape</p>
+                    <p>Phosphate strip mining left over 80 percent of the island uninhabitable, and dependent on imported food (Gowdy 1999; Pollock 2014). Today the same island is repurposed as a border in Australia's offshore detention regime — a floating border prison on an already-ruined landscape.</p>
+                    <blockquote>Nauru is a borderscape in which Australia has externalised both its border violence and its ecological responsibility.</blockquote>
+                `
+            }
+        ];
+
+        const bounds = [[-179, -80], [179, 80]];
+
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: 'https://tiles.openfreemap.org/styles/positron',
+            center: [10, 20],
+            zoom: 1.5,
+            maxBounds: bounds
+        });
+
+        map.addControl(new maplibregl.NavigationControl());
+
+        let selectedMarkerElement = null;
+        let currentPopup = null;
+
+        function clearSelection() {
+            if (selectedMarkerElement) {
+                selectedMarkerElement.classList.remove('selected');
+                selectedMarkerElement = null;
+            }
+        }
+
+        function selectMarker(markerElement) {
+            clearSelection();
+            markerElement.classList.add('selected');
+            selectedMarkerElement = markerElement;
+        }
+
+        function showSitePopup(site, markerElement) {
+            if (currentPopup) {
+                currentPopup.remove();
+            }
+
+            selectMarker(markerElement);
+
+            currentPopup = new maplibregl.Popup({
+                closeButton: true,
+                closeOnClick: false,
+                offset: 18,
+                maxWidth: '380px'
+            })
+                .setLngLat(site.coordinates)
+                .setHTML(site.content)
+                .addTo(map);
+
+            currentPopup.on('close', () => {
+                clearSelection();
+                currentPopup = null;
+            });
+        }
+
+        map.on('load', () => {
+            sites.forEach(site => {
+                const markerElement = document.createElement('div');
+                markerElement.className = 'marker';
+                new maplibregl.Marker({ element: markerElement })
+                    .setLngLat(site.coordinates)
+                    .addTo(map);
+                markerElement.addEventListener('click', () => {
+                    showSitePopup(site, markerElement);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
